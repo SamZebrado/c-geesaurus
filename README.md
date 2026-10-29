@@ -1,8 +1,8 @@
 # C. Geesaurus · 从灵感到下一镜
 C. Geesaurus · From inspiration to the next shot.
 
-**展示入口：在线 Demo 正在进行首次发布验证；现在可以按下方步骤本地运行。**  
-**Demo: the first online deployment is being verified; you can run it locally with the steps below.**
+**[打开在线交互 Demo →](https://samzebrado.github.io/c-geesaurus/)** · 无需登录，无需 Key；仅虚构素材与本地模拟。  
+**[Open the interactive demo →](https://samzebrado.github.io/c-geesaurus/)** · No login or API key; fictional assets and browser-local mocks only.
 
 <img src="docs/assets/c-geesaurus.png" alt="C. Geesaurus：抱着肉桂的中国大雁 / A Chinese goose holding cinnamon" width="150">
 

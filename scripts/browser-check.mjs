@@ -54,8 +54,8 @@ try {
   const click=async selector=>{await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);};
   const value=selector=>evaluate(`document.querySelector(${JSON.stringify(selector)}).textContent`);
   const change=async(selector,value)=>evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(selector)});el.value=${JSON.stringify(value)};el.dispatchEvent(new Event('change',{bubbles:true}));})()`);
-  const navigate=async path=>{await cdp('Page.navigate',{url:base+path});await waitFor(`document.querySelector('#guide-steps')?.children.length === 4`);};
-  const shot=async name=>{const metrics=await cdp('Page.getLayoutMetrics');const height=Math.min(metrics.cssContentSize.height,9000);const {data}=await cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:metrics.cssContentSize.width,height,scale:1}});await writeFile(join(out,name),Buffer.from(data,'base64'));};
+  const navigate=async path=>{await cdp('Page.navigate',{url:base+path});await waitFor(`location.href === ${JSON.stringify(base+path)} && document.querySelector('#guide-steps')?.children.length === 4`);};
+  const shot=async name=>{await waitFor(`document.querySelector('#toast').hidden`);await evaluate(`document.fonts.ready.then(()=>{document.activeElement?.blur();window.scrollTo({top:0,left:0,behavior:'instant'});})`);const metrics=await cdp('Page.getLayoutMetrics');const height=Math.min(metrics.cssContentSize.height,9000);const {data}=await cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:metrics.cssContentSize.width,height,scale:1}});await writeFile(join(out,name),Buffer.from(data,'base64'));};
   await cdp('Page.enable');await cdp('Runtime.enable');await cdp('Network.enable');
   await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
   await navigate('/');await waitFor(`Array.from(document.images).every(image=>image.complete)`);await shot('desktop-initial.png');
