@@ -1,0 +1,28 @@
+name: Mock demo checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and offline contract tests
+        run: npm run check
+      - name: Headless mock workflow
+        run: node scripts/demo.mjs --json > /tmp/c-geesaurus-mock.json
+      - name: Desktop and mobile browser smoke tests
+        run: node scripts/browser-check.mjs
+      - name: Upload synthetic UI test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mock-browser-evidence
+          path: test-results/
+          if-no-files-found: ignore

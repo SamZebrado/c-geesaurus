@@ -1,0 +1,15 @@
+{
+  "name": "c-geesaurus",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An honest, browser-local demo of an agent-assisted video creation workflow.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check docs/src/app.js && node --check docs/src/core.js && node --test tests/*.test.mjs",
+    "dev": "python3 -m http.server 4173 --bind 127.0.0.1 --directory docs",
+    "demo": "node scripts/demo.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
