@@ -17,6 +17,10 @@ jobs:
         run: npm run check
       - name: Headless mock workflow
         run: node scripts/demo.mjs --json > /tmp/c-geesaurus-mock.json
+      - name: Audio-comic mock checkpoint recovery
+        run: |
+          node scripts/audio-comic.mjs --stop-after-submit > /tmp/c-geesaurus-comic-checkpoint.json
+          node scripts/audio-comic.mjs --resume /tmp/c-geesaurus-comic-checkpoint.json --json > /tmp/c-geesaurus-comic-review.json
       - name: Install Chinese fonts for visual evidence
         run: |
           sudo apt-get update -qq

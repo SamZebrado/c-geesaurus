@@ -48,6 +48,9 @@ What works today.
 ## 本地运行
 Run locally.
 
+新增 **[可复用有声漫画工作流](AUDIO_COMIC.md)**：从工作台底部进入 `audio-comic.html`，或运行 `npm run comic`。固定成页 manifest、角色 voice profile、逐句情绪与节奏、独立 TTS/可选 VC、零现金预算、断点恢复、bytes/SHA 来源回执、计划 SRT 与实听验收字段。当前只有离线 JSON mock；真实合成、试听、音乐混音和成片导出尚未实现。
+The audio-comic contract shares one dependency-free browser/CLI core. Run `npm run comic` or open `audio-comic.html` from the workspace; see the linked guide for manifests, checkpoints, licensing, listening review and export boundaries. No paid API, credits, recordings or model downloads are used.
+
 网页无需构建或安装依赖；使用 Python 3 提供静态文件，再打开命令输出的本地地址。不要直接用 `file://` 打开模块脚本页面。  
 The web app needs no build or dependency install. Serve the static files with Python 3, then open the local address. Do not open the module-script page via `file://`.
 
