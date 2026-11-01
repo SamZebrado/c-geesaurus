@@ -20,12 +20,18 @@ const server = createServer(async (request,response) => {
     const pathname=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
     const target=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
     if (!target.startsWith(root+sep)) { response.writeHead(403).end(); return; }
+    // Read before sending success headers: missing assets must return a real 404,
+    // not crash the entire QA server with ERR_HTTP_HEADERS_SENT.
+    const bytes = await readFile(target);
     response.writeHead(200,{'Content-Type':mime[extname(target)]||'application/octet-stream'});
-    response.end(await readFile(target));
+    response.end(bytes);
   } catch { response.writeHead(404).end(); }
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${server.address().port}`;
+// Negative server regression: absent assets do not kill later browser requests.
+assert.equal((await fetch(`${base}/missing-qa-asset.svg`)).status, 404);
+assert.equal((await fetch(`${base}/index.html`)).status, 200);
 const profile=await mkdtemp(join(tmpdir(),'geesaurus-browser-'));
 const chrome=spawn(executable,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-networking','--disable-extensions','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,'--remote-debugging-port=0','about:blank'],{stdio:['ignore','ignore','pipe']});
 let ws, sequence=0;
