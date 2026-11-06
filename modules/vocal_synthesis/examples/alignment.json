@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "segments": [
+    {"source_start_s": 0.0, "source_end_s": 1.0, "target_start_s": 0.0, "target_end_s": 2.5, "kind": "auto"}
+  ]
+}

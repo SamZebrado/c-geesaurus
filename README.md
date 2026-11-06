@@ -45,6 +45,13 @@ What works today.
 - **共享核心**：网页 GUI、headless CLI 和 JavaScript 函数接口使用同一份纯函数状态逻辑；不依赖 GUI 点击来运行模拟核心。  
   **Shared core:** the web GUI, headless CLI, and JavaScript function interface use the same pure state logic; the mock core does not depend on GUI clicks.
 
+## 独立音频子模块
+Standalone audio submodule.
+
+[旋律与人声工作流](modules/vocal_synthesis/README.md) 提供可离线运行的 Python/WORLD 人声重合成核心：人工确认的单声部音符 JSON + 已授权人声 WAV + 明确时间映射，并附数学合成示例、测试和隐私边界。它不是网页 Mock 的生成能力，也尚不支持任意 PDF 乐谱识别、自动歌词对齐或完整神经歌唱。高级电子乐器路线先记录在文档中，代码只含基础导音器。
+
+The [vocal synthesis workflow](modules/vocal_synthesis/README.md) is a separate, runnable Python/WORLD audio module with an explicit monophonic JSON score, authorized voice WAV, reviewed timing map, synthetic example and tests. It is not integrated with the browser mock and does not implement arbitrary score recognition or automatic singing. Advanced instrument synthesis is documented as future work; a basic guide tone is included.
+
 ## 本地运行
 Run locally.
 
