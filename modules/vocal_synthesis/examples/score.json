@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "duration_s": 2.5,
+  "notes": [
+    {"start_s": 0.0, "end_s": 0.5, "pitch": "C4"},
+    {"start_s": 0.5, "end_s": 1.0, "pitch": "E4"},
+    {"start_s": 1.0, "end_s": 1.25, "pitch": null},
+    {"start_s": 1.25, "end_s": 2.0, "pitch": "D4"},
+    {"start_s": 2.0, "end_s": 2.5, "pitch": "G3"}
+  ]
+}
