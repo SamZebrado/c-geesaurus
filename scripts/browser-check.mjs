@@ -20,12 +20,18 @@ const server = createServer(async (request,response) => {
     const pathname=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
     const target=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
     if (!target.startsWith(root+sep)) { response.writeHead(403).end(); return; }
+    // Read before sending success headers: missing assets must return a real 404,
+    // not crash the entire QA server with ERR_HTTP_HEADERS_SENT.
+    const bytes = await readFile(target);
     response.writeHead(200,{'Content-Type':mime[extname(target)]||'application/octet-stream'});
-    response.end(await readFile(target));
+    response.end(bytes);
   } catch { response.writeHead(404).end(); }
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${server.address().port}`;
+// Negative server regression: absent assets do not kill later browser requests.
+assert.equal((await fetch(`${base}/missing-qa-asset.svg`)).status, 404);
+assert.equal((await fetch(`${base}/index.html`)).status, 200);
 const profile=await mkdtemp(join(tmpdir(),'geesaurus-browser-'));
 const chrome=spawn(executable,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-networking','--disable-extensions','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,'--remote-debugging-port=0','about:blank'],{stdio:['ignore','ignore','pipe']});
 let ws, sequence=0;
@@ -55,7 +61,7 @@ try {
   const value=selector=>evaluate(`document.querySelector(${JSON.stringify(selector)}).textContent`);
   const change=async(selector,value)=>evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(selector)});el.value=${JSON.stringify(value)};el.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const navigate=async path=>{await cdp('Page.navigate',{url:base+path});await waitFor(`location.href === ${JSON.stringify(base+path)} && document.querySelector('#guide-steps')?.children.length === 4`);};
-  const shot=async name=>{await waitFor(`document.querySelector('#toast').hidden`);await evaluate(`document.fonts.ready.then(()=>{document.activeElement?.blur();window.scrollTo({top:0,left:0,behavior:'instant'});})`);const metrics=await cdp('Page.getLayoutMetrics');const height=Math.min(metrics.cssContentSize.height,9000);const {data}=await cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:metrics.cssContentSize.width,height,scale:1}});await writeFile(join(out,name),Buffer.from(data,'base64'));};
+  const shot=async name=>{await waitFor(`!document.querySelector('#toast') || document.querySelector('#toast').hidden`);await evaluate(`document.fonts.ready.then(()=>{document.activeElement?.blur();window.scrollTo({top:0,left:0,behavior:'instant'});})`);const metrics=await cdp('Page.getLayoutMetrics');const height=Math.min(metrics.cssContentSize.height,9000);const {data}=await cdp('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:metrics.cssContentSize.width,height,scale:1}});await writeFile(join(out,name),Buffer.from(data,'base64'));};
   await cdp('Page.enable');await cdp('Runtime.enable');await cdp('Network.enable');
   await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
   await navigate('/');await waitFor(`Array.from(document.images).every(image=>image.complete)`);await shot('desktop-initial.png');
@@ -90,8 +96,34 @@ try {
     if(width<=390)assert.ok(boxes[1].y>boxes[0].y+100);
     if(width===1440)assert.ok(boxes[1].x>boxes[0].x+100);
   }
+  await cdp('Page.navigate',{url:base+'/audio-comic.html'});
+  await waitFor(`document.querySelector('#comic-run') && !document.querySelector('#comic-run').disabled`);
+  assert.equal(await evaluate(`document.querySelector('#comic-vc').checked`),false);
+  await click('#comic-run');await waitFor(`document.querySelector('#comic-status').textContent.includes('离线合同完成')`);
+  const comicState=()=>evaluate(`JSON.parse(localStorage.getItem('c-geesaurus-audio-comic-v1'))`);
+  assert.equal((await comicState()).jobs.length,2);
+  await click('#comic-run');await waitFor(`!document.querySelector('#comic-run').disabled`);
+  assert.equal((await comicState()).jobs.length,2);assert.ok((await comicState()).jobs.every(job=>job.attempts===1));
+  await cdp('Page.reload');await waitFor(`document.querySelectorAll('#comic-jobs li').length===2`);
+  assert.match(await value('#comic-listening'),/未进行/);assert.match(await value('#comic-subtitles'),/00:00:04,200/);
+  await click('#comic-export');
+  for(let i=0;i<40;i++){try{await access(join(out,'c-geesaurus-audio-comic-mock.json'));break;}catch{await new Promise(resolve=>setTimeout(resolve,100));}}
+  const comicBundle=JSON.parse(await readFile(join(out,'c-geesaurus-audio-comic-mock.json'),'utf8'));
+  assert.equal(comicBundle.acceptance.productionReady,false);assert.equal(comicBundle.acceptance.listeningPass,false);assert.ok(comicBundle.artifacts.every(a=>a.mediaType==='application/json'));
+  for(const width of [360,390,768,1440]){
+    await cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<700});
+    assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`Audio comic overflow: ${width}`);
+    if(width===360)await shot('mobile-comic.png');if(width===1440)await shot('desktop-comic.png');
+  }
+  await evaluate(`localStorage.removeItem('c-geesaurus-audio-comic-v1')`);await cdp('Page.reload');await waitFor(`document.querySelector('#comic-run') && !document.querySelector('#comic-run').disabled`);
+  await click('#comic-vc');await waitFor(`document.querySelector('#comic-vc').checked && JSON.parse(localStorage.getItem('c-geesaurus-audio-comic-v1')).manifest.vc.enabled`);
+  await click('#comic-run');await waitFor(`document.querySelectorAll('#comic-jobs li').length===4 && !document.querySelector('#comic-run').disabled`);
+  assert.deepEqual((await comicState()).jobs.map(j=>j.request.stage),['tts','vc','tts','vc']);
+  await evaluate(`(()=>{const key='c-geesaurus-audio-comic-v1';const state=JSON.parse(localStorage.getItem(key));state.jobs[0].artifact.bytes[0]^=1;localStorage.setItem(key,JSON.stringify(state));})()`);
+  await cdp('Page.reload');await waitFor(`document.querySelector('#comic-status')?.textContent.includes('已停止')`);
+  assert.equal(await evaluate(`document.querySelector('#comic-run').disabled`),true);
   assert.deepEqual(errors,[]);assert.deepEqual(network.filter(url=>!url.startsWith(base)&&!url.startsWith('blob:')),[]);
-  const result={passed:true,viewports:[360,390,768,1440],screenshots:5,externalRequests:0,consoleErrors:0,checks:['choices and approval','capability overrides','scene pinning','request deduplication','refresh persistence','matching download','quality boundary','reset cancel and Escape','Back navigation','responsive cards','no overflow','no external requests']};
+  const result={passed:true,viewports:[360,390,768,1440],screenshots:7,externalRequests:0,consoleErrors:0,checks:['choices and approval','capability overrides','scene pinning','request deduplication','refresh persistence','matching download','quality boundary','reset cancel and Escape','Back navigation','responsive cards','audio comic TTS and optional VC','comic refresh and deduplication','comic mock package download','corrupt comic checkpoint blocks','no overflow','no external requests']};
   await writeFile(join(out,'browser-results.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
 } finally {
   for(const entry of pending.values())clearTimeout(entry.timer);

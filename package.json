@@ -7,9 +7,10 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check docs/src/app.js && node --check docs/src/core.js && node --test tests/*.test.mjs",
+    "check": "node --check docs/src/app.js && node --check docs/src/core.js && node --check docs/src/audio-comic.js && node --check docs/src/audio-comic-app.js && node --check scripts/audio-comic.mjs && node --test tests/*.test.mjs",
     "dev": "python3 -m http.server 4173 --bind 127.0.0.1 --directory docs",
-    "demo": "node scripts/demo.mjs"
+    "demo": "node scripts/demo.mjs",
+    "comic": "node scripts/audio-comic.mjs"
   },
   "engines": { "node": ">=20" }
 }

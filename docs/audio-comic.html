@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'none'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>C. Geesaurus · 有声漫画离线流程</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="src/audio-comic-app.js"></script>
+</head>
+<body>
+  <main class="comic-main">
+    <p><a href="index.html">← 回到创作工作台</a></p>
+    <p class="eyebrow">AUDIO COMIC · MOCK ONLY</p>
+    <h1>漫画成页 → 固定声线 → 逐句配音 → 听审与导出</h1>
+    <p class="notice">仅虚构纸船示例。输出为 JSON 字节与计划字幕；没有真实合成、试听、VC 或视频渲染，不使用 API 额度。</p>
+    <div class="card">
+      <h2>1 · 顺序与角色</h2>
+      <div id="comic-pages" class="comic-pages"></div>
+      <ul id="comic-voices"></ul>
+      <p>页面使用仓库原有 SVG。角色声线只是通用成年声文字描述；来源许可、声线版本与对白指令均随 manifest 导出。</p>
+      <label><input id="comic-vc" type="checkbox"> 加入独立 VC 合同演示（仍是 JSON mock；默认关闭）</label>
+    </div>
+    <div class="card">
+      <h2>2 · 零现金本地任务</h2>
+      <p>先保存请求身份，再核接受回执与输出字节。刷新恢复同一请求；未知接受状态只核查，不重发。</p>
+      <div class="task-buttons"><button id="comic-run" class="button primary">运行离线合同</button><button id="comic-export" class="button secondary" disabled>下载 mock 验收包 JSON</button></div>
+      <p id="comic-status" role="status" aria-live="polite">正在校验本地断点…</p>
+      <ol id="comic-jobs"></ol>
+    </div>
+    <div class="card">
+      <h2>3 · 实听与交付边界</h2>
+      <p>每句核对发音、角色一致性、情绪节奏、破音底噪、字幕同步与配乐平衡，记录审听人、时间和完整听过的输出 SHA。ASR 与波形仅辅助。</p>
+      <p id="comic-listening">实听：未进行。真实合成：未进行。成片导出：未实现。</p>
+      <p>默认无音乐；加入音乐需单独记录同步、改编、导出许可和署名。SRT 时间来自 manifest，尚未与音频对齐。</p>
+      <pre id="comic-subtitles" class="comic-code"></pre>
+    </div>
+  </main>
+</body>
+</html>
