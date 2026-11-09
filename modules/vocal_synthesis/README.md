@@ -56,6 +56,16 @@ python -m vocal_workflow render private/voice.wav private/score.json private/ali
 
 将私有素材和自写歌词放在忽略目录 `private/`，不要改成公开示例；生成结果在忽略目录 `outputs/`。仅 `.gitignore` 并不能阻止强制提交或已追踪文件泄露，提交前仍要检查。
 
+### 从钢琴谱选择演唱声部
+
+想按已有曲调唱歌，可以先找一份合适、来源清楚的钢琴谱，以右手中的旋律线配词演唱；也可以根据作品需要，酌情唱左手中的某条声部，或只用左手声部作节奏、和声与伴奏参考。
+
+- 先看实际声部，不把“右手”直接等同于主旋律。右手也可能含和弦或伴奏，旋律也可能转到左手；先听、读谱，再提取需要演唱的单声部音符。
+- 按乐句把歌词音节对应到音符，核对休止、反复、一字多音、转音和换气。某个元音被拉得过长时，可在保留词意的前提下调整措辞、补充音节，再做短句试听。
+- 左手人声是可选编配，不默认增加低音演唱。若某首作品已明确只唱右手、不加低音人声，就遵循该曲的决定；器乐伴奏仍可保留谱中的左手和低音，二者不要混淆。
+- 保留曲名、作曲者、编配者、版刻／出版信息及谱面来源链接，实际使用哪个版本就注明哪个版本。原曲进入公有领域，不代表现代编配或谱面版本也自动可任意使用；演唱、改词、改编、传播与商用分别核对适用许可。
+- 本模块仍需人工把选出的旋律整理成下方的单声部 JSON 时间线，再配合获授权的人声和时间映射使用；这条经验不表示已经实现 PDF、MIDI 或 MusicXML 自动导入。
+
 ### 音符时间线
 
 参考 `examples/score.json`。所有时间单位是秒，区间为左闭右开。`duration_s` 含前后静音；没有音符覆盖的时间就是休止。`pitch: null` 也表示休止。音符必须排序、不重叠、至少 10 ms，目标音高限制为 55–1000 Hz。`C4 = MIDI 60`，`A4 = MIDI 69 = 440 Hz`。
@@ -105,3 +115,4 @@ python -m vocal_workflow render private/voice.wav private/score.json private/ali
 ## English summary
 
 An offline Python subdirectory that extracts a working WORLD resynthesis core into a reusable, privacy-preserving interface. It takes a reviewed monophonic JSON note timeline, authorized mono voice WAV, and explicit source-to-target segment alignment. It does not implement arbitrary score recognition, MIDI/MusicXML import, automatic lyric alignment, TTS, voice cloning, or neural singing synthesis. A synthetic vowel and invented melody exercise the complete signal path; no real lyrics, recordings, identity data, or production links are included. Numerical pitch/duration/clipping checks are not perceptual approval. Advanced electronic instrument synthesis remains future work; only a basic three-harmonic guide is implemented here.
+
