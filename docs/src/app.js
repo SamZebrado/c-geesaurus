@@ -16,11 +16,15 @@ function dialogue(line, changed = false) { return `<div class="dialogue${changed
 const viewNames = { workspace: '创作工作台', assets: '资产参考库', models: '模型与服务', tasks: '任务与质检', sound: '音乐与声音' };
 function route() {
   const hash = location.hash.slice(1) || 'workspace';
-  const view = hash === 'writing' ? 'workspace' : (Object.hasOwn(viewNames, hash) ? hash : 'workspace');
+  const view = ['writing', 'shots'].includes(hash) ? 'workspace' : (Object.hasOwn(viewNames, hash) ? hash : 'workspace');
   document.querySelectorAll('.view').forEach(section => { section.hidden = section.id !== view; });
   document.querySelectorAll('[data-nav]').forEach(link => { link.classList.toggle('active', link.dataset.nav === view); if (link.dataset.nav === view) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current'); });
   $('#page-title').textContent = viewNames[view];
-  if (hash === 'writing') requestAnimationFrame(() => $('#writing').scrollIntoView({ block: 'start' }));
+  if (hash === 'writing' || hash === 'shots') requestAnimationFrame(() => {
+    const target = $(hash === 'writing' ? '#suggestions-card' : '#shots');
+    target.scrollIntoView({ block: 'start' });
+    target.focus({ preventScroll: true });
+  });
 }
 function renderWriting() {
   $('#draft-lines').innerHTML = DRAFT.map(line => dialogue(line)).join('');
@@ -31,7 +35,7 @@ function renderWriting() {
   $('#final-status').textContent = state.approved ? `✓ 演示 v${state.revision} 已确认；镜头对白逐条匹配。` : unresolved(state) ? `还有 ${unresolved(state)} 条建议待你取舍。` : '取舍完成。检查说话者与对白，再确认这版。';
   $('#final-status').classList.toggle('warning', !state.approved && !unresolved(state));
   $('#approve-script').disabled = !!(unresolved(state) || state.approved || state.task);
-  $('#approve-script').textContent = state.approved ? '✓ 已确认演示版本' : '确认这版演示剧本 ✓';
+  $('#approve-script').textContent = state.approved ? '✓ 已确认演示版本' : '用这版对白 ✓';
   $('#shot-version').textContent = state.approved ? `✓ 剧本 v${state.revision} · 对白 2 / 2 匹配` : `候选 v${state.revision} · 等待确认`;
   $('#shot-list').innerHTML = lines.map((line, index) => `<article class="shot-card"><div class="shot-visual"><img src="assets/river-${index ? 'side' : 'wide'}.svg" alt="SHOT-0${index + 1} 人工绘制参考示意，真实首态图尚未生成"><span>SHOT-0${index + 1}</span><small>参考示意 · 真实首态图未生成</small></div><div class="shot-copy"><div class="shot-heading"><h3>${index ? '顺着风，慢慢出发' : '出发前的一点好奇'}</h3><span>0${index * 4}—0${index * 4 + 4}s · ${index ? '侧面近景' : '固定广角'}</span></div><div class="shot-row"><span>分镜动作</span><p>${index ? '纸船从画面左侧缓缓漂向右侧。镜头不追赶，留住水纹和微风。' : '晨光落在河岸。纸船轻轻摇晃，停留片刻，船尖朝向河对岸。'}</p></div><div class="shot-row"><span>对白 ${line.id}</span><p class="shot-dialogue"><strong>${escapeHTML(line.speaker)}</strong> · “${escapeHTML(line.text)}”</p></div><div class="shot-refs"><span>river-bank@1 · ${index ? 'side' : 'wide'}</span><span>paper-boat@1</span><span>script@${state.revision}</span><span>${state.approved ? '本地已确认' : '未确认'}</span></div></div></article>`).join('');
 }
@@ -64,7 +68,7 @@ function renderTask() {
     accepted: ['✓', '找到绑定此请求的接受回执。', '这才进入“已接受”状态。原始回执与解释分开记录。'],
     waiting: ['◷', '“预计需要约 2 分钟。”', '这是虚构页面里的 ETA；不启动真实计时。点击下方按钮模拟下一次观察，不会新建请求。'],
   };
-  if (!task) $('#observation').innerHTML = '<span class="observation-icon">◌</span><h4>等你的故事准备好。</h4><p>这里将呈现人工构造的页面观察，而不是实时网站。</p>';
+  if (!task) $('#observation').innerHTML = '<span class="observation-icon">◌</span><h4>等你的故事准备好。</h4><p>确认对白后，可以在这里看任务怎么往下走。</p>';
   else if (['ready', 'downloaded'].includes(task.status)) $('#observation').innerHTML = `<h4>两张卡片，只取有来源的那一张。</h4><p>绑定当前请求的结果可下载为 JSON 记录；不是视频文件。</p><div class="result-grid"><div class="result-item invalid"><strong>result-other-002</strong><p>请求不匹配 · 不下载</p><button disabled class="button secondary">来源不符</button></div><div class="result-item"><strong>result-paperboat-001</strong><p>demo-paperboat-001 ✓</p><button id="download-record" class="button primary">${task.downloaded ? '再次下载 JSON ↓' : '下载演示 JSON ↓'}</button></div></div>`;
   else { const observation = observations[task.status]; $('#observation').innerHTML = `<span class="observation-icon">${observation[0]}</span><h4>${observation[1]}</h4><p>${observation[2]}</p>`; }
   $('#advance-task').disabled = !task || ['ready', 'downloaded'].includes(task.status);
@@ -73,17 +77,17 @@ function renderTask() {
   $('#submit-count').textContent = task?.submissions || 0;
   $('#confirm-count').textContent = task?.confirmations || 0;
   $('#observe-count').textContent = task?.observations || 0;
-  $('#evidence-list').innerHTML = task ? task.evidence.map((item, index) => `<li><strong>${String(index + 1).padStart(2,'0')} · ${escapeHTML(item.kind)}</strong><br>${escapeHTML(item.text)}</li>`).join('') : '<li>还没有任务。所有后续证据都是带有 Mock 标记的人工 fixture。</li>';
+  $('#evidence-list').innerHTML = task ? task.evidence.map((item, index) => `<li><strong>${String(index + 1).padStart(2,'0')} · ${escapeHTML(item.kind)}</strong><br>${escapeHTML(item.text)}</li>`).join('') : '<li>还没有任务。试跑一次，就能看到提交、恢复和下载记录。</li>';
 }
 function renderGuide() {
-  const steps = [ ['writing', '01 · 写作与取舍', '采纳 S01，拒绝错误的 S02。', unresolved(state) === 0], ['workspace', '02 · 确认与审阅', '确认定稿，检查两张镜头卡。', state.approved], ['tasks', '03 · 观察模拟任务', '推进观察，试试刷新不重发。', ['ready','downloaded'].includes(state.task?.status)], ['tasks', '04 · 下载演示记录', '保存 JSON；不是真实视频。', state.task?.downloaded] ];
+  const steps = [ ['writing', '01 · 选对白', '试采纳第一条，再看分镜里的对白。', unresolved(state) === 0], ['workspace', '02 · 看分镜', '两条都选好后，点「用这版对白」。', state.approved], ['tasks', '03 · 试跑任务', '点「看下一步」，刷新后也能继续。', ['ready','downloaded'].includes(state.task?.status)], ['tasks', '04 · 下载记录', '看看试跑经过了哪些步骤。', state.task?.downloaded] ];
   $('#guide-steps').innerHTML = steps.map(([href,title,note,done]) => `<a href="#${href}" class="guide-step ${done ? 'done' : ''}"><b>${done ? '✓ ' : ''}${title}</b><small>${note}</small></a>`).join('');
 }
 function render() {
   renderWriting(); renderModels(); renderTask(); renderGuide();
   $('#storage-warning').hidden = storageAvailable;
   $('#new-scene-version').disabled = state.sceneVersion === 2;
-  $('#scene-status').textContent = state.sceneVersion === 2 ? '已模拟创建 v2（黄昏光线，仅元数据）。两个镜头仍锁定 v1；没有偷偷替换参考图。' : '当前资产版本 v1（日光）。可以模拟创建 v2，观察镜头引用保持不变。';
+  $('#scene-status').textContent = state.sceneVersion === 2 ? '已选黄昏光线（v2）。原有两张分镜仍沿用日光参考（v1）。' : '当前资产版本 v1（日光）。可以模拟创建 v2，观察镜头引用保持不变。';
   $('#repair-plan').hidden = !state.repairOpen;
   $('#repair-preview').setAttribute('aria-expanded', String(state.repairOpen));
   $('#repair-preview').textContent = state.repairOpen ? '收起修补计划 −' : '查看局部修补计划 ＋';
@@ -106,7 +110,7 @@ document.addEventListener('change', event => {
   if (event.target.matches('[data-config]')) { const id = event.target.id; save(setConfig(state, event.target.dataset.config, event.target.value)); document.getElementById(id)?.focus(); }
 });
 $('#approve-script').addEventListener('click', () => { save(approve(state)); toast('演示剧本已确认。镜头对白与当前版本逐条对应。'); });
-$('#start-task').addEventListener('click', () => { save(startTask(state)); toast('创建了一个本地模拟任务。真实 API 调用数：0。'); });
+$('#start-task').addEventListener('click', () => { save(startTask(state)); toast('纸船镜头开始试跑。'); });
 $('#advance-task').addEventListener('click', () => save(advanceTask(state)));
 $('#recover-task').addEventListener('click', () => { save(recoverTask(state)); toast('已模拟重读同一请求。提交计数仍然是 1。'); });
 $('#new-scene-version').addEventListener('click', () => save({ ...state, sceneVersion: 2 }));

@@ -32,7 +32,7 @@ try {
     const manifest = exampleManifest(); manifest.vc.enabled = JSON.parse(raw).manifest?.vc?.enabled === true;
     state = await restoreLedger(raw, manifest);
   } else state = await createLedger(exampleManifest());
-  status('零现金；仅本地 JSON mock。可以运行或恢复同一任务。');
+  status('准备好了。可以开始，或接着上次的进度。');
 } catch (error) {
   blocked = true; state = await createLedger(exampleManifest());
   status(`断点或存储不可用，已停止：${error.message}。保留存储中的原记录；使用 CLI 检查，不自动清空或重发。`);
@@ -68,7 +68,7 @@ $('#comic-run').addEventListener('click', async () => {
       persist(); job = state.jobs.find(item => item.request.id === job.request.id);
       state = await recordArtifact(state, job.request.id, await adapter.fetchBytes(job.request)); persist();
     }
-    status(`离线合同完成；${state.jobs.length} 个 JSON fixture；现金 0；真实合成和实听均未进行。`);
+    status(`试跑完成：${state.jobs.length} 条记录。往下看计划字幕，也可以下载这一页的配音计划。`);
     });
   } catch (error) { blocked = true; status(`已停止并保留断点：${error.message}`); }
   finally { busy = false; render(); }
