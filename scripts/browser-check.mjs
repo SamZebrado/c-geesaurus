@@ -33,7 +33,7 @@ const base=`http://127.0.0.1:${server.address().port}`;
 assert.equal((await fetch(`${base}/missing-qa-asset.svg`)).status, 404);
 assert.equal((await fetch(`${base}/index.html`)).status, 200);
 const profile=await mkdtemp(join(tmpdir(),'geesaurus-browser-'));
-const chrome=spawn(executable,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-networking','--disable-extensions','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,'--remote-debugging-port=0','about:blank'],{stdio:['ignore','ignore','pipe']});
+const chrome=spawn(executable,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-networking','--autoplay-policy=no-user-gesture-required','--disable-extensions','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,'--remote-debugging-port=0','about:blank'],{stdio:['ignore','ignore','pipe']});
 let ws, sequence=0;
 const pending=new Map(), errors=[], network=[];
 try {
@@ -89,14 +89,31 @@ try {
   await navigate('/#models');await navigate('/#assets');await evaluate('history.back()');await waitFor(`!document.querySelector('#models').hidden`);
   for(const width of [360,390,768,1440]){
     await cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<700});
-    for(const view of ['workspace','assets','models','tasks']){await navigate('/#'+view);await waitFor(`!document.querySelector('#${view}').hidden`);assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`Horizontal overflow: ${width} / ${view}`);}
+    for(const view of ['workspace','assets','models','tasks','sound']){await navigate('/#'+view);await waitFor(`!document.querySelector('#${view}').hidden`);assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`Horizontal overflow: ${width} / ${view}`);}
     await navigate('/#workspace');
     if(width<=390)await shot(`mobile-${width}.png`);
     const boxes=await evaluate(`Array.from(document.querySelector('.shot-card').children).map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y};})`);
     if(width<=390)assert.ok(boxes[1].y>boxes[0].y+100);
     if(width===1440)assert.ok(boxes[1].x>boxes[0].x+100);
   }
-  await cdp('Page.navigate',{url:base+'/audio-comic.html'});
+  await navigate('/#sound');await waitFor(`!document.querySelector('#sound').hidden`);
+  assert.equal(await evaluate(`document.querySelector('[data-nav=sound]').getAttribute('aria-current')`),'page');
+  assert.equal(await value('#mv-original'),'灯がともる');
+  await click('[data-mv-ms="5000"]');assert.equal(await evaluate(`document.querySelector('#mv-caption').hidden`),true);
+  assert.match(await value('#mv-evidence'),/待复听/);
+  await click('[data-mv-ms="8000"]');assert.equal(await value('#mv-translation'),'灯亮了');
+  assert.match(await value('#mv-evidence'),/第二处副歌/);
+  assert.equal(await evaluate(`document.querySelector('#mv-stage').dataset.camera`),'side');
+  await shot('desktop-sound.png');
+  await click('[data-mv-ms="11400"]');assert.equal(await evaluate(`document.querySelector('#mv-caption').hidden`),true);
+  assert.match(await value('#mv-evidence'),/12 秒/);
+  await click('#sound-guide');
+  await waitFor(`document.querySelector('#sound-guide-status').textContent.includes('导音已播放') && !document.querySelector('#sound-guide').disabled`);
+  await cdp('Emulation.setDeviceMetricsOverride',{width:360,height:900,deviceScaleFactor:1,mobile:true});
+  await shot('mobile-sound.png');
+  await click('#sound a[href="audio-comic.html"]');
+  await waitFor(`location.pathname === '/audio-comic.html'`);
+
   await waitFor(`document.querySelector('#comic-run') && !document.querySelector('#comic-run').disabled`);
   assert.equal(await evaluate(`document.querySelector('#comic-vc').checked`),false);
   await click('#comic-run');await waitFor(`document.querySelector('#comic-status').textContent.includes('离线合同完成')`);
@@ -123,7 +140,7 @@ try {
   await cdp('Page.reload');await waitFor(`document.querySelector('#comic-status')?.textContent.includes('已停止')`);
   assert.equal(await evaluate(`document.querySelector('#comic-run').disabled`),true);
   assert.deepEqual(errors,[]);assert.deepEqual(network.filter(url=>!url.startsWith(base)&&!url.startsWith('blob:')),[]);
-  const result={passed:true,viewports:[360,390,768,1440],screenshots:7,externalRequests:0,consoleErrors:0,checks:['choices and approval','capability overrides','scene pinning','request deduplication','refresh persistence','matching download','quality boundary','reset cancel and Escape','Back navigation','responsive cards','audio comic TTS and optional VC','comic refresh and deduplication','comic mock package download','corrupt comic checkpoint blocks','no overflow','no external requests']};
+  const result={passed:true,viewports:[360,390,768,1440],screenshots:9,externalRequests:0,consoleErrors:0,checks:['choices and approval','capability overrides','scene pinning','request deduplication','refresh persistence','matching download','quality boundary','reset cancel and Escape','Back navigation','responsive cards','music navigation and local guide','separate refrains, blank uncertain cue and complete tail','audio comic TTS and optional VC','comic refresh and deduplication','comic mock package download','corrupt comic checkpoint blocks','no overflow','no external requests']};
   await writeFile(join(out,'browser-results.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
 } finally {
   for(const entry of pending.values())clearTimeout(entry.timer);

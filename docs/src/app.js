@@ -13,10 +13,10 @@ function save(next) {
   render();
 }
 function dialogue(line, changed = false) { return `<div class="dialogue${changed ? ' changed' : ''}"><div class="speaker">${escapeHTML(line.id)} · ${escapeHTML(line.speaker)}</div><blockquote>“${escapeHTML(line.text)}”</blockquote></div>`; }
-const viewNames = { workspace: '创作工作台', assets: '资产参考库', models: '模型与服务', tasks: '任务与质检' };
+const viewNames = { workspace: '创作工作台', assets: '资产参考库', models: '模型与服务', tasks: '任务与质检', sound: '音乐与声音' };
 function route() {
   const hash = location.hash.slice(1) || 'workspace';
-  const view = hash === 'writing' ? 'workspace' : (viewNames[hash] ? hash : 'workspace');
+  const view = hash === 'writing' ? 'workspace' : (Object.hasOwn(viewNames, hash) ? hash : 'workspace');
   document.querySelectorAll('.view').forEach(section => { section.hidden = section.id !== view; });
   document.querySelectorAll('[data-nav]').forEach(link => { link.classList.toggle('active', link.dataset.nav === view); if (link.dataset.nav === view) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current'); });
   $('#page-title').textContent = viewNames[view];
@@ -114,6 +114,63 @@ $('#repair-preview').addEventListener('click', () => save({ ...state, repairOpen
 $('#reset-demo').addEventListener('click', () => $('#reset-dialog').showModal());
 $('#cancel-reset').addEventListener('click', () => $('#reset-dialog').close());
 $('#confirm-reset').addEventListener('click', () => { $('#reset-dialog').close(); save(initialState()); location.hash = 'workspace'; toast('已重置本地演示。下载过的文件不受影响。'); });
+// Fictional timing example: two individually located refrains, no cue for the obscured line.
+const mvCues = [[2200,3040,'灯がともる','灯亮了'], [7800,8640,'灯がともる','灯亮了']];
+const mvBeats = {
+  2300: ['wide','river-wide.svg','第一处副歌，字头与尾音可辨。'],
+  5000: ['side','river-side.svg','过门没有清楚的人声：留空，待复听。'],
+  8000: ['side','river-side.svg','第二处副歌：唱词相同，时间段独立。'],
+  11400: ['wide','river-wide.svg','尾奏保留到 12 秒，最后一条字幕不决定影片结束。'],
+};
+function previewMv(ms) {
+  if (!Object.hasOwn(mvBeats, ms)) return;
+  const [camera, background, note] = mvBeats[ms];
+  const cue = mvCues.find(([start, end]) => start <= ms && ms < end);
+  $('#mv-stage').dataset.camera = camera;
+  $('#mv-bg').src = 'assets/' + background;
+  $('#mv-original').textContent = cue?.[2] || '';
+  $('#mv-translation').textContent = cue?.[3] || '';
+  $('#mv-caption').hidden = !cue;
+  $('#mv-evidence').textContent = note;
+  document.querySelectorAll('[data-mv-ms]').forEach(button => button.setAttribute('aria-pressed', String(+button.dataset.mvMs === ms)));
+}
+document.querySelectorAll('[data-mv-ms]').forEach(button => button.addEventListener('click', () => previewMv(+button.dataset.mvMs)));
+previewMv(2300);
+// Analogous to the local module's basic guide tone, not the WORLD signal path.
+$('#sound-guide').addEventListener('click', async event => {
+  const button = event.currentTarget, status = $('#sound-guide-status');
+  if (!window.AudioContext) { status.textContent = '这个浏览器不支持 Web Audio；下方仍有离线导音说明。'; return; }
+  button.disabled = true;
+  let audio;
+  try {
+    audio = new AudioContext();
+    await audio.resume();
+    const start = audio.currentTime + .04;
+    let last;
+    for (const [offset, frequency] of [[0,261.63],[.72,329.63]]) {
+      const from = start + offset, end = from + (offset ? .30 : .60);
+      for (const [harmonic, amplitude] of [[1,.12],[2,.035],[3,.016]]) {
+        const oscillation = audio.createOscillator(), gain = audio.createGain();
+        oscillation.frequency.value = frequency * harmonic;
+        gain.gain.setValueAtTime(0, from);
+        gain.gain.linearRampToValueAtTime(amplitude, from + .015);
+        gain.gain.setValueAtTime(amplitude, end - .03);
+        gain.gain.linearRampToValueAtTime(0, end);
+        oscillation.connect(gain).connect(audio.destination);
+        oscillation.start(from); oscillation.stop(end);
+        last = oscillation;
+      }
+    }
+    status.textContent = '正在播放：C4 → 休止 → E4。';
+    await new Promise(resolve => last.addEventListener('ended', resolve, { once: true }));
+    status.textContent = '导音已播放。实际人声转换需在本地运行 Python/WORLD。';
+  } catch {
+    status.textContent = '浏览器未能播放导音；下方仍有离线导音说明。';
+  } finally {
+    button.disabled = false;
+    if (audio && audio.state !== 'closed') await audio.close().catch(() => {});
+  }
+});
 window.addEventListener('hashchange', route);
 window.addEventListener('storage', event => { if (event.key === STORAGE_KEY) { state = restoreState(event.newValue); render(); toast('已同步同一浏览器其他标签页的演示进度。'); } });
 render(); route();
