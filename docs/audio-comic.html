@@ -21,12 +21,12 @@
       <div id="comic-pages" class="comic-pages"></div>
       <ul id="comic-voices"></ul>
       <p>页面使用仓库原有 SVG。角色声线只是通用成年声文字描述；来源许可、声线版本与对白指令均随 manifest 导出。</p>
-      <label><input id="comic-vc" type="checkbox"> 加入独立 VC 合同演示（仍是 JSON mock；默认关闭）</label>
+      <label><input id="comic-vc" type="checkbox" disabled> 加入独立 VC 合同演示（仍是 JSON mock；默认关闭）</label>
     </div>
     <div class="card">
       <h2>2 · 零现金本地任务</h2>
       <p>先保存请求身份，再核接受回执与输出字节。刷新恢复同一请求；未知接受状态只核查，不重发。</p>
-      <div class="task-buttons"><button id="comic-run" class="button primary">运行离线合同</button><button id="comic-export" class="button secondary" disabled>下载 mock 验收包 JSON</button></div>
+      <div class="task-buttons"><button id="comic-run" class="button primary" disabled>运行离线合同</button><button id="comic-export" class="button secondary" disabled>下载 mock 验收包 JSON</button></div>
       <p id="comic-status" role="status" aria-live="polite">正在校验本地断点…</p>
       <ol id="comic-jobs"></ol>
     </div>
