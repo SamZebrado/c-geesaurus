@@ -66,12 +66,18 @@ try {
   await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
   await navigate('/');await waitFor(`Array.from(document.images).every(image=>image.complete)`);await shot('desktop-initial.png');
   assert.equal(await evaluate(`document.querySelector('#approve-script').disabled`),true);
-  await click('[data-id="S01"][data-decision="accept"]');await click('[data-id="S02"][data-decision="reject"]');await click('#approve-script');
+  assert.match(await value('.hero h1'),/分镜怎么变/);
+  await click('.hero a[href="#writing"]');await waitFor(`location.hash==='#writing' && document.activeElement.id==='suggestions-card'`);
+  const beforeFirstChoice=await value('#shot-list .shot-dialogue');
+  await click('[data-id="S01"][data-decision="accept"]');
+  assert.notEqual(await value('#shot-list .shot-dialogue'),beforeFirstChoice);
+  await click('.suggestion-payoff');await waitFor(`location.hash==='#shots' && !document.querySelector('#workspace').hidden && document.activeElement.id==='shots'`);
+  await click('[data-id="S02"][data-decision="reject"]');await click('#approve-script');
   assert.match(await value('#shot-version'),/匹配/);
   await click('[data-nav="models"]');await waitFor(`!document.querySelector('#models').hidden`);
   await change('#default-backend','mock-text');assert.match(await value('#capability-status'),/能力缺口/);
   await change('#module-page','mock-balanced');await change('#module-vision','mock-balanced');assert.match(await value('#capability-status'),/校验通过/);await shot('desktop-config.png');
-  await click('[data-nav="assets"]');await waitFor(`!document.querySelector('#assets').hidden`);await click('#new-scene-version');assert.match(await value('#scene-status'),/仍锁定 v1/);
+  await click('[data-nav="assets"]');await waitFor(`!document.querySelector('#assets').hidden`);await click('#new-scene-version');assert.match(await value('#scene-status'),/仍沿用日光参考/);
   await click('[data-nav="tasks"]');await waitFor(`!document.querySelector('#tasks').hidden`);await click('#start-task');
   for(let count=0;count<3;count++)await click('#advance-task');
   assert.match(await value('#task-status'),/虚构 ETA/);
@@ -91,6 +97,19 @@ try {
     await cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<700});
     for(const view of ['workspace','assets','models','tasks','sound']){await navigate('/#'+view);await waitFor(`!document.querySelector('#${view}').hidden`);assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true,`Horizontal overflow: ${width} / ${view}`);}
     await navigate('/#workspace');
+    if(width===360){
+      await click('.hero a[href="#writing"]');
+      await waitFor(`location.hash==='#writing' && document.activeElement.id==='suggestions-card'`);
+      const before=await value('#shot-list .shot-dialogue');
+      await click('[data-id="S01"][data-decision="accept"]');
+      await click('[data-id="S02"][data-decision="reject"]');
+      await click('#approve-script');
+      await click('.suggestion-payoff');
+      await waitFor(`location.hash==='#shots' && document.activeElement.id==='shots'`);
+      assert.notEqual(await value('#shot-list .shot-dialogue'),before);
+      assert.match(await value('#shot-version'),/匹配/);
+      await navigate('/#workspace');
+    }
     if(width<=390)await shot(`mobile-${width}.png`);
     const boxes=await evaluate(`Array.from(document.querySelector('.shot-card').children).map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y};})`);
     if(width<=390)assert.ok(boxes[1].y>boxes[0].y+100);
@@ -116,7 +135,7 @@ try {
 
   await waitFor(`document.querySelector('#comic-run') && !document.querySelector('#comic-run').disabled`);
   assert.equal(await evaluate(`document.querySelector('#comic-vc').checked`),false);
-  await click('#comic-run');await waitFor(`document.querySelector('#comic-status').textContent.includes('离线合同完成')`);
+  await click('#comic-run');await waitFor(`document.querySelector('#comic-status').textContent.includes('试跑完成')`);
   const reloadComic=async predicate=>{
     await evaluate('window.__qaOldComicDocument = true');
     await cdp('Page.reload');
@@ -127,7 +146,7 @@ try {
   await click('#comic-run');await waitFor(`!document.querySelector('#comic-run').disabled`);
   assert.equal((await comicState()).jobs.length,2);assert.ok((await comicState()).jobs.every(job=>job.attempts===1));
   await reloadComic(`document.querySelectorAll('#comic-jobs li').length===2`);
-  assert.match(await value('#comic-listening'),/未进行/);assert.match(await value('#comic-subtitles'),/00:00:04,200/);
+  assert.match(await value('#comic-listening'),/还没录音/);assert.match(await value('#comic-subtitles'),/00:00:04,200/);
   await click('#comic-export');
   for(let i=0;i<40;i++){try{await access(join(out,'c-geesaurus-audio-comic-mock.json'));break;}catch{await new Promise(resolve=>setTimeout(resolve,100));}}
   const comicBundle=JSON.parse(await readFile(join(out,'c-geesaurus-audio-comic-mock.json'),'utf8'));
@@ -145,7 +164,7 @@ try {
   await reloadComic(`document.querySelector('#comic-status')?.textContent.includes('已停止')`);
   assert.equal(await evaluate(`document.querySelector('#comic-run').disabled`),true);
   assert.deepEqual(errors,[]);assert.deepEqual(network.filter(url=>!url.startsWith(base)&&!url.startsWith('blob:')),[]);
-  const result={passed:true,viewports:[360,390,768,1440],screenshots:9,externalRequests:0,consoleErrors:0,checks:['choices and approval','capability overrides','scene pinning','request deduplication','refresh persistence','matching download','quality boundary','reset cancel and Escape','Back navigation','responsive cards','music navigation and local guide','separate refrains, blank uncertain cue and complete tail','audio comic TTS and optional VC','comic refresh and deduplication','comic mock package download','corrupt comic checkpoint blocks','no overflow','no external requests']};
+  const result={passed:true,viewports:[360,390,768,1440],screenshots:9,externalRequests:0,consoleErrors:0,checks:['first click and confirmed shot payoff on desktop and mobile','choices and approval','capability overrides','scene pinning','request deduplication','refresh persistence','matching download','quality boundary','reset cancel and Escape','Back navigation','responsive cards','music navigation and local guide','separate refrains, blank uncertain cue and complete tail','audio comic TTS and optional VC','comic refresh and deduplication','comic mock package download','corrupt comic checkpoint blocks','no overflow','no external requests']};
   await writeFile(join(out,'browser-results.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
 } finally {
   for(const entry of pending.values())clearTimeout(entry.timer);

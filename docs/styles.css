@@ -41,3 +41,5 @@
 .mv-controls button[aria-pressed=true]{background:#597753;color:#fff}
 @media(max-width:700px){.sound-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.mv-layer{transition:none}}
+
+.suggestions-card{scroll-margin-top:16px}.suggestion-payoff{margin-top:16px}
