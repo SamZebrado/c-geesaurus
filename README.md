@@ -45,6 +45,13 @@ What works today.
 - **共享核心**：网页 GUI、headless CLI 和 JavaScript 函数接口使用同一份纯函数状态逻辑；不依赖 GUI 点击来运行模拟核心。  
   **Shared core:** the web GUI, headless CLI, and JavaScript function interface use the same pure state logic; the mock core does not depend on GUI clicks.
 
+## 音乐与声音演示
+Audio and music demos.
+
+打开在线 Demo 的「音乐与声音」：有声漫画可交互运行离线 Mock，旋律与人声可播放浏览器内合成的导音，MV 可切换虚构时间轴、检查重复副歌和留空字幕。WORLD 人声处理另外在本地运行；网页不做语音识别、生图或成片渲染。
+
+Open **Audio & Music** in the demo: run the offline audio-comic mock, hear an in-browser synthetic guide tone, or step through a fictional music-video timeline. WORLD processing runs locally, not in the browser. There is no speech recognition, image generation, or video rendering on this site.
+
 ## 独立音频子模块
 Standalone audio submodule.
 
@@ -55,8 +62,8 @@ The [vocal synthesis workflow](modules/vocal_synthesis/README.md) is a separate,
 ## 本地运行
 Run locally.
 
-新增 **[可复用有声漫画工作流](AUDIO_COMIC.md)**：从工作台底部进入 `audio-comic.html`，或运行 `npm run comic`。固定成页 manifest、角色 voice profile、逐句情绪与节奏、独立 TTS/可选 VC、零现金预算、断点恢复、bytes/SHA 来源回执、计划 SRT 与实听验收字段。当前只有离线 JSON mock；真实合成、试听、音乐混音和成片导出尚未实现。
-The audio-comic contract shares one dependency-free browser/CLI core. Run `npm run comic` or open `audio-comic.html` from the workspace; see the linked guide for manifests, checkpoints, licensing, listening review and export boundaries. No paid API, credits, recordings or model downloads are used.
+新增 **[可复用有声漫画工作流](AUDIO_COMIC.md)**：从「音乐与声音」进入 `audio-comic.html`，或运行 `npm run comic`。固定成页 manifest、角色 voice profile、逐句情绪与节奏、独立 TTS/可选 VC、零现金预算、断点恢复、bytes/SHA 来源回执、计划 SRT 与实听验收字段。当前只有离线 JSON mock；真实合成、试听、音乐混音和成片导出尚未实现。
+The audio-comic contract shares one dependency-free browser/CLI core. Run `npm run comic` or open `audio-comic.html` from Audio & Music; see the linked guide for manifests, checkpoints, licensing, listening review and export boundaries. No paid API, credits, recordings or model downloads are used.
 
 网页无需构建或安装依赖；使用 Python 3 提供静态文件，再打开命令输出的本地地址。不要直接用 `file://` 打开模块脚本页面。  
 The web app needs no build or dependency install. Serve the static files with Python 3, then open the local address. Do not open the module-script page via `file://`.

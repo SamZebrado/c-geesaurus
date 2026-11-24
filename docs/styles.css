@@ -18,3 +18,26 @@
 .comic-pages img { width: 100%; border-radius: 12px; }
 .comic-code { white-space: pre-wrap; overflow-wrap: anywhere; }
 #comic-jobs { overflow-wrap: anywhere; }
+
+/* Audio module overview and fictional MV timing laboratory */
+.sound-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.sound-card{min-width:0}
+.sound-card>p:not(.small-note){color:var(--muted);font-size:13px;margin:10px 0}
+.sound-card .button{margin-top:12px}
+.sound-card summary{cursor:pointer;color:#506249;font-weight:650;margin:10px 0}
+.sound-card code{overflow-wrap:anywhere}
+.sound-card details p,.sound-terminal p{font-size:12px;color:var(--muted);margin:.5em 0}
+.sound-terminal a{text-decoration:underline}
+.mv-card,.sound-terminal{margin-top:18px}
+.mv-stage{width:100%;max-width:760px;aspect-ratio:16/8;position:relative;overflow:hidden;border-radius:10px;background:#b3cbc0;margin-top:14px}
+.mv-stage img{height:100%;width:100%;object-fit:cover}
+.mv-layer{position:absolute;top:34%;left:32%;line-height:1;color:#f7ebca;font-size:clamp(27px,6vw,68px);text-shadow:1px 2px 3px #27392f;transition:transform .25s ease-out}
+.mv-stage[data-camera=side] .mv-layer{transform:translateX(130%) rotate(18deg)}
+.mv-caption{position:absolute;bottom:9%;left:50%;transform:translateX(-50%);background:#172a22ee;color:#fff9e8;padding:3px 12px;border-radius:4px;text-align:center;line-height:1.4;font-size:clamp(14px,2.1vw,23px)}
+.mv-caption span{display:block;white-space:nowrap}
+.mv-caption span+span{color:#e3f2db;font-size:.84em}
+.mv-controls{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.mv-controls button{min-height:42px}
+.mv-controls button[aria-pressed=true]{background:#597753;color:#fff}
+@media(max-width:700px){.sound-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.mv-layer{transition:none}}

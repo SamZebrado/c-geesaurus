@@ -39,8 +39,14 @@ try {
 }
 render();
 $('#comic-vc').addEventListener('change', async () => {
-  try { const m = exampleManifest(); m.vc.enabled = $('#comic-vc').checked; state = await createLedger(m); persist(); render(); }
-  catch (error) { blocked = true; status(`已停止：${error.message}`); render(); }
+  if (busy || blocked || state.jobs.length) return;
+  const enabled = $('#comic-vc').checked;
+  busy = true;
+  $('#comic-vc').disabled = true;
+  $('#comic-run').disabled = true;
+  try { const m = exampleManifest(); m.vc.enabled = enabled; state = await createLedger(m); persist(); }
+  catch (error) { blocked = true; status(`已停止：${error.message}`); }
+  finally { busy = false; render(); }
 });
 $('#comic-run').addEventListener('click', async () => {
   if (busy || blocked) return; busy = true; render();
